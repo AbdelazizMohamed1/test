@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="/" />
+  <meta charset="UTF-8" />
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible" />
+  <meta name="description" content="Benisuef Real Estate App" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="Benisuef Real Estate" />
+  <link rel="apple-touch-icon" href="icons/Icon-192.png" />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Benisuef Real Estate</title>
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #ffffff;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    #loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    #loading img {
+      width: 150px;
+      height: 150px;
+      margin-bottom: 10px;
+    }
+    #loading p.loading-text {
+      font-size: 18px;
+      color: #125290;
+      margin: 10px 0;
+      font-family: Arial, sans-serif;
+    }
+    .spinner {
+      border: 4px solid #125290;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+    }
+    #footer {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
+    }
+    #footer p {
+      font-size: 14px;
+      color: #125290;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    #notify-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #125290;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+  <script>
+    function getOneSignalSubscriptionId() {
+      if (window.OneSignal &&
+          OneSignal.User &&
+          OneSignal.User.PushSubscription &&
+          OneSignal.User.PushSubscription.id) {
+        return OneSignal.User.PushSubscription.id;
+      }
+      return null;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("loading").style.display = "flex";
+      document.getElementById("footer").style.display = "block";
+
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function (OneSignal) {
+        try {
+          await OneSignal.init({
+            appId: "89047687-47ac-4523-a427-d9c3875e9e89",
+            allowLocalhostAsSecureOrigin: true,
+            notifyButton: { enable: false },
+            serviceWorkerPath: "/OneSignalSDKWorker.js",
+            serviceWorkerUpdaterPath: "/OneSignalSDKUpdaterWorker.js",
+            serviceWorkerParam: { scope: "/" },
+            autoResubscribe: true
+          });
+
+          console.log("✅ OneSignal Initialized");
+
+          const btn = document.getElementById("notify-btn");
+          btn.style.display = "block";
+
+          btn.onclick = async () => {
+            const permission = await OneSignal.Notifications.permission;
+            if (permission === 'denied') {
+              alert("يرجى السماح بالإشعارات من إعدادات المتصفح");
+              return;
+            }
+
+            try {
+              await OneSignal.Notifications.requestPermission();
+
+              const optedIn = await OneSignal.User.PushSubscription.optedIn;
+              const subId = OneSignal.User.PushSubscription.id;
+
+              console.log("🔐 Permission status:", permission);
+              console.log("🔔 Push Enabled after request:", optedIn);
+              console.log("📌 Subscription ID after request:", subId);
+
+              if (optedIn && subId) {
+                // الآن يمكن تحميل التطبيق
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("footer").style.display = "none";
+                document.body.style.background = "transparent";
+              } else {
+                alert("لم يتم تفعيل الإشعارات بنجاح.");
+              }
+
+            } catch (err) {
+              console.error("❌ Subscription failed:", err);
+            }
+          };
+
+        } catch (error) {
+          console.error("❌ OneSignal initialization failed:", error);
+        }
+      });
+
+      const script = document.querySelector('script[src="flutter_bootstrap.js"]');
+      if (!script) {
+        console.error("❌ flutter_bootstrap.js not found!");
+      }
+      script.onerror = () => console.error("❌ Failed to load flutter_bootstrap.js");
+      script.onload = () => console.log("✅ flutter_bootstrap.js loaded");
+    });
+  </script>
+</head>
+<body>
+<div id="loading" style="display: none;">
+  <img src="assets/assets/images/logo.png" alt="Loading Logo" />
+  <p class="loading-text">من فضلك فعّل الإشعارات للمتابعة</p>
+  <button id="notify-btn" style="display:none;">تفعيل الإشعارات</button>
+  <div class="spinner"></div>
+</div>
+
+<div id="footer" style="display: none;">
+  <p>Powered by Safe Hand</p>
+</div>
+
+<script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
